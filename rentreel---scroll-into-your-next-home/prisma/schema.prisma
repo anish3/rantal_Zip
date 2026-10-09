@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model UserProfile {
+  id             String   @id @default(cuid())
+  clerkUserId    String   @unique
+  username       String   @unique
+  email          String   @unique
+  phone          String?
+  name           String
+  avatar         String?
+  bio            String?
+  roles          String[] @default([])
+  activeRole     String   @default("TENANT")
+  city           String?
+  locationArea   String?
+  authProvider   String   @default("CLERK")
+  providerSubject String?
+  isVerified     Boolean  @default(false)
+  followersCount Int      @default(0)
+  followingCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  properties     Property[]
+  listings       Listing[]
+  savedProperties SavedProperty[]
+  notifications  Notification[]
+  reports        Report[]
+  messagesSent   Message[] @relation("SentMessages")
+  messagesReceived Message[] @relation("ReceivedMessages")
+  visitRequestsSent VisitRequest[] @relation("VisitRequestsSent")
+  visitRequestsReceived VisitRequest[] @relation("VisitRequestsReceived")
+  requirements   Requirement[]
+  reviews        Review[]
+
+  @@index([email])
+  @@index([clerkUserId])
+}
+
+model Property {
+  id             String   @id @default(cuid())
+  ownerId        String
+  owner          UserProfile @relation(fields: [ownerId], references: [id])
+  title          String
+  description    String?
+  propertyType   String
+  city           String
+  area           String
+  fullAddress    String?
+  latitude       Float?
+  longitude      Float?
+  amenities      String[] @default([])
+  rules          String[] @default([])
+  foodOption     String?
+  genderPreference String
+  noBrokerage    Boolean @default(true)
+  coverPhoto     String?
+  photos         String[] @default([])
+  totalRooms     Int      @default(1)
+  availableRooms Int      @default(1)
+  minRent        Int?
+  maxRent        Int?
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+  isVerified     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  rooms          Room[]
+  listings       Listing[]
+  reviews        Review[]
+  savedBy        SavedProperty[]
+  images         PropertyImage[]
+
+  @@index([ownerId])
+  @@index([city, area])
+}
+
+model PropertyImage {
+  id        String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url       String
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model Room {
+  id               String   @id @default(cuid())
+  propertyId        String
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomNumber       String
+  roomType         String
+  rent             Int
+  deposit          Int?
+  furnishing      String?
+  hasAC            Boolean @default(false)
+  hasAttachedBath Boolean @default(false)
+  hasBalcony       Boolean @default(false)
+  photos           String[] @default([])
+  availableFrom    String?
+  isAvailable      Boolean @default(true)
+  createdAt        DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model Listing {
+  id               String   @id @default(cuid())
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  roomId          String?
+  ownerId         String
+  owner           UserProfile @relation(fields: [ownerId], references: [id])
+  title           String
+  description     String?
+  rent            Int
+  deposit         Int?
+  propertyType    String
+  roomType        String
+  city            String
+  area            String
+  photos          String[] @default([])
+  amenities       String[] @default([])
+  genderPreference String
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  rentedAt        DateTime?
+  renewedAt       DateTime?
+  viewsCount      Int      @default(0)
+  inquiriesCount  Int      @default(0)
+  savesCount      Int      @default(0)
+  isFeatured      Boolean  @default(false)
+
+  @@index([ownerId])
+  @@index([status, city, area])
+}
+
+model Requirement {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           UserProfile @relation(fields: [tenantId], references: [id])
+  title            String
+  city             String
+  preferredAreas   String[] @default([])
+  budgetMin        Int
+  budgetMax        Int
+  propertyTypes    String[] @default([])
+  roomTypes        String[] @default([])
+  moveInDate       String?
+  occupation       String?
+  genderPreference String?
+  preferences      String[] @default([])
+  description      String?
+  status           String   @default("ACTIVE")
+  createdAt        DateTime @default(now())
+  viewsCount       Int      @default(0)
+  matchScore       Int?
+
+  @@index([tenantId])
+  @@index([status, city])
+}
+
+model SavedProperty {
+  id        String   @id @default(cuid())
+  userId    String
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      UserProfile @relation(fields: [userId], references: [id])
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  linkUrl   String?
+  metadata  Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  conversationId String
+  senderId      String
+  sender        UserProfile @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId    String
+  receiver      UserProfile @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  text          String
+  context       Json?
+  imageUrl      String?
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([senderId, receiverId])
+}
+
+model VisitRequest {
+  id             String   @id @default(cuid())
+  propertyId     String
+  listingId      String?
+  tenantId       String
+  tenant         UserProfile @relation("VisitRequestsSent", fields: [tenantId], references: [id])
+  ownerId        String
+  owner          UserProfile @relation("VisitRequestsReceived", fields: [ownerId], references: [id])
+  preferredDate  String
+  preferredTime  String
+  message        String?
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([ownerId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reporter    UserProfile @relation(fields: [reporterId], references: [id])
+  targetType  String
+  targetId    String
+  reason      String
+  details     String?
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  @@index([reporterId])
+}

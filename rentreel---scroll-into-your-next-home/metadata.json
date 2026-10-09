@@ -1,0 +1,6 @@
+{
+  "name": "RentReel - Professional Property & Rental Marketplace",
+  "description": "Professional PropTech property rental platform for discovering rental homes, flats, rooms, PGs, hostels, and verified tenants with active listings and instant enquiries.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
