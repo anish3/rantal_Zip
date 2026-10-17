@@ -1,46 +1,46 @@
 # RentReel
 
-RentReel is a Vite + React frontend with a simple Express API and a Prisma-ready Postgres data layer. This prototype is intentionally unauthenticated for local development. The app opens directly and keeps the existing rental marketplace UI without requiring a login system.
+RentReel is a Vite + React frontend with a simple Express API and an optional Prisma/Postgres layer. This prototype is intentionally unauthenticated for local development, so the app opens directly without a login flow.
 
 ## Stack
 
 - Frontend: React + Vite + TypeScript
 - Backend: Express + TypeScript
-- Database: Prisma + PostgreSQL (optional; the app falls back to the built-in demo data store without DATABASE_URL)
+- Database: Prisma + PostgreSQL (optional; the app falls back to the built-in demo data store when DATABASE_URL is unset)
 
 ## Prerequisites
 
 - Node.js 20+
 - npm
-- Optional: PostgreSQL database and DATABASE_URL if you want Prisma persistence
+- Optional: PostgreSQL if you want real Prisma persistence
 
 ## Local setup on Windows
 
-1. Open PowerShell in the project folder.
+1. Open PowerShell and move into the project folder:
+
+```powershell
+cd "D:\rantal_Zip\rentreel---scroll-into-your-next-home"
+```
+
 2. Copy the example environment file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-3. Fill in the optional database values if needed in the newly created `.env` file.
-4. Install dependencies:
+3. Install dependencies:
 
 ```powershell
 npm install
 ```
 
-5. Start the app:
+4. Start the app:
 
 ```powershell
 npm run dev
 ```
 
-6. Open the app in your browser:
-
-```text
-http://localhost:3000
-```
+5. Open the app in the browser. The server usually starts on `http://localhost:3000`; if that port is busy, it will use the next free port and print the actual URL in the terminal.
 
 ## Environment variables
 
@@ -58,7 +58,7 @@ DIRECT_URL=postgresql://postgres:postgres@localhost:5432/rentreel?schema=public
 
 ## Database
 
-This project already includes Prisma configuration for PostgreSQL. If `DATABASE_URL` is not set, the app still starts in demo mode so the frontend can run without a database connection.
+This project includes Prisma configuration for PostgreSQL. If `DATABASE_URL` is not set, the app still starts in prototype mode so the frontend can run without a database connection. In that mode, the app continues using its local JSON-backed demo data layer.
 
 If you want full persistence:
 
@@ -89,6 +89,6 @@ npm start
 
 ## Troubleshooting
 
-- If the dev server crashes with `ENOENT`, make sure you are running the command inside the project folder.
+- If `npm run dev` fails with `ENOENT`, make sure you are running it from the project folder, not from the parent folder.
 - If `DATABASE_URL` is missing, the app still starts in prototype mode, but Postgres-backed records will not persist.
-- If a Windows machine cannot run a script, use PowerShell and keep commands cross-platform.
+- If the app picks a different local port, use the port printed by the server log.

@@ -1,0 +1,10 @@
+# Local personal / non-project artifacts
+*.png
+*.pdf
+*.docx
+*.pptx
+*.exe
+New Tab.html
+New Tab_files/
+rentreel---scroll-into-your-next-home.zip
+package-lock.json
