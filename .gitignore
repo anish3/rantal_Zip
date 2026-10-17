@@ -7,4 +7,11 @@
 New Tab.html
 New Tab_files/
 rentreel---scroll-into-your-next-home.zip
+
+# Local tool/cache noise
+node_modules/
+package.json
 package-lock.json
+.env
+.env.*
+*.log
