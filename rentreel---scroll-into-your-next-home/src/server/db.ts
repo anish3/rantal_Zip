@@ -1,7 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = process.env.DATABASE_URL
+let databaseEnabled = false;
+
+const prisma = process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0
   ? new PrismaClient({
       adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
       log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
@@ -9,24 +11,33 @@ const prisma = process.env.DATABASE_URL
   : null;
 
 export const db = {
-  isEnabled: () => Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0),
+  isEnabled: () => databaseEnabled,
+  setEnabled: (enabled: boolean) => {
+    databaseEnabled = enabled;
+  },
 };
 
 export async function connectDatabase() {
-  if (!db.isEnabled()) {
+  const hasUrl = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0);
+
+  if (!hasUrl) {
+    databaseEnabled = false;
     console.log('[DB] DATABASE_URL is not configured. Falling back to the existing JSON persistence layer.');
     return false;
   }
 
   if (!prisma) {
+    databaseEnabled = false;
     return false;
   }
 
   try {
     await prisma.$connect();
+    databaseEnabled = true;
     console.log('[DB] PostgreSQL connection successful via Prisma.');
     return true;
   } catch (error) {
+    databaseEnabled = false;
     console.error('[DB] PostgreSQL connection failed. Application is continuing with the existing file-based fallback.', error);
     return false;
   }
