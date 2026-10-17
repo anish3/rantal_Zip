@@ -1,163 +1,94 @@
-# RentReel — Scroll into your next home 🏠📱
+# RentReel
 
-> An Instagram-style rental social marketplace web application for discovering rental homes, rooms, PGs, hostels, and tenants with short-form reels and 10-day expiring listings.
+RentReel is a Vite + React frontend with a simple Express API and a Prisma-ready Postgres data layer. This prototype is intentionally unauthenticated for local development. The app opens directly and keeps the existing rental marketplace UI without requiring a login system.
 
----
+## Stack
 
-## 🌟 Overview
+- Frontend: React + Vite + TypeScript
+- Backend: Express + TypeScript
+- Database: Prisma + PostgreSQL (optional; the app falls back to the built-in demo data store without DATABASE_URL)
 
-RentReel bridges the gap between traditional clunky classified portals and modern social media discovery. Instead of outdated static ads, RentReel brings:
+## Prerequisites
 
-1. **Instagram-Style Social Experience**: High-fidelity feeds, profile headers with highlights, verification badges, likes, comments, and saves.
-2. **Short-Form Property Reels**: Full-height vertical video tours of rooms, bathrooms, kitchens, balconies, and student PGs with floating property context cards.
-3. **Dual-Sided Marketplace Discovery**:
-   - **Side 1 (Tenants)**: Discover verified PGs, rooms, flats, co-living suites, and hostels in Indore.
-   - **Side 2 (Owners / PGs / Brokers)**: Discover active tenant rental requirements (students, IT professionals) with target budgets and move-in dates.
-4. **10-Day Automatic Expiration Lifecycle**:
-   - Every rental listing automatically expires after exactly 10 days (`status = EXPIRED`).
-   - Expired listings disappear from feeds and search to prevent bogus/stale ads.
-   - Idempotent background worker notifies owners 24h prior and allows 1-click renewal (`status = ACTIVE` + 10 more days) or marking as rented (`status = RENTED`).
-5. **Contextual Direct Messaging**:
-   - Real-time chat with attached interactive property/listing cards.
-   - Read receipts, typing indicators, and instant inquiry presets.
-6. **Rule-Based & AI-Ready Tenant Matching**:
-   - Compares budget, location, gender preference, and amenities to compute match scores (e.g. 94% Match).
+- Node.js 20+
+- npm
+- Optional: PostgreSQL database and DATABASE_URL if you want Prisma persistence
 
----
+## Local setup on Windows
 
-## 🏙️ Demo City: Indore, India
+1. Open PowerShell in the project folder.
+2. Copy the example environment file:
 
-Configured with prime Indore rental hubs:
-- **Vijay Nagar** (Student & IT hub, PU-4, near Medanta & Prestige)
-- **Scheme 54** (Behind C21 Mall, residential flats)
-- **Scheme 140 & Pipliyahana** (Boutique serviced apartments & tech hubs)
-- **Bhawarkua** (DAVV Takshashila campus, coaching centers & budget student PGs)
-- **Palasia** (Central prime residences)
-- **Rau & Super Corridor** (TCS, Infosys campus techies)
-
----
-
-## 🛠️ Architecture
-
-```
-├── server.ts                    # Full-Stack Express entry point with Vite middleware
-├── src/
-│   ├── server/                  # Backend Architecture
-│   │   ├── types.ts             # Domain models (User, Property, Listing, Reel, etc.)
-│   │   ├── store.ts             # Persistence store + 10-day background expiration worker
-│   │   ├── routes.ts            # RESTful API endpoints (/api/*)
-│   │   └── data/seed.ts         # Realistic Indore seed data (owners, brokers, tenants)
-│   ├── context/
-│   │   └── AppContext.tsx       # Global application state & demo persona switching
-│   ├── components/
-│   │   ├── layout/              # Sidebar, MobileNav, Header
-│   │   ├── feed/                # FeedView, PropertyPostCard, RequirementCard
-│   │   ├── reels/               # ReelsView (Full vertical video player + drawer)
-│   │   ├── profile/             # PropertyProfileView (Instagram-style), TenantProfileView
-│   │   ├── marketplace/         # FindPropertyView (Map/Grid/List), FindTenantView
-│   │   ├── messages/            # MessagesView (Real-time chat with attached context)
-│   │   ├── dashboard/           # OwnerDashboard (10d lifecycle management), AdminDashboard
-│   │   ├── notifications/       # NotificationsDrawer with 1-click renewal action
-│   │   ├── search/              # SearchModal (Global search across 5 tabs)
-│   │   └── modals/              # VisitScheduleModal, CreateModal
-│   ├── types/client.ts          # Client TypeScript declarations
-│   └── lib/api.ts               # Clean async API client
+```powershell
+Copy-Item .env.example .env
 ```
 
----
+3. Fill in the optional database values if needed in the newly created `.env` file.
+4. Install dependencies:
 
-## ⏰ The 10-Day Expiration Flow
-
-```
-+-------------------+
-|  Listing Created  |  (status: ACTIVE, expiresAt: now + 10 days)
-+-------------------+
-          |
-          v
-   [ 9 Days Pass ] ----> System sends alert: "Expires tomorrow. Still available?"
-          |
-          v
-   [ 10 Days Pass ]
-          |
-          +---> status: EXPIRED
-                Disappears from Home Feed, Explore, and Search
-                Owner dashboard shows: [Renew 10 Days] or [Mark Rented]
-```
-
-Owners can click **Renew 10 Days** at any time to reset `expiresAt = now + 10 days` and restore active status. When a room is taken, clicking **Mark Rented** updates the database and permanently removes it from active discovery.
-
----
-
-## 🚀 Getting Started
-
-### 1. Installation
-
-```bash
+```powershell
 npm install
 ```
 
-### 2. Development Server
+5. Start the app:
 
-Start the full-stack server (runs Express API on `/api` and Vite frontend on port 3000):
-
-```bash
+```powershell
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000).
+6. Open the app in your browser:
 
-### 3. Production Build & Start
+```text
+http://localhost:3000
+```
 
-```bash
+## Environment variables
+
+Create a `.env` file from `.env.example` and include values like:
+
+```env
+PORT=3000
+NODE_ENV=development
+APP_URL=http://localhost:3000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rentreel?schema=public
+DIRECT_URL=postgresql://postgres:postgres@localhost:5432/rentreel?schema=public
+```
+
+> Do not commit your `.env` file. Keep secrets out of Git.
+
+## Database
+
+This project already includes Prisma configuration for PostgreSQL. If `DATABASE_URL` is not set, the app still starts in demo mode so the frontend can run without a database connection.
+
+If you want full persistence:
+
+```powershell
+npx prisma generate
+npx prisma db push
+```
+
+## Available scripts
+
+```powershell
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run db:generate
+npm run db:push
+npm run db:validate
+npm run clean
+```
+
+## Production build
+
+```powershell
 npm run build
 npm start
 ```
 
----
+## Troubleshooting
 
-## 📡 REST API Reference
-
-### Auth & Personas
-- `GET /api/auth/me` — Current session user
-- `GET /api/auth/demo-users` — Available marketplace personas
-- `POST /api/auth/switch-user` — Switch active persona (Tenant, PG Owner, Broker, Admin)
-- `POST /api/auth/switch-role` — Switch active role mode
-
-### Feed & Social
-- `GET /api/feed` — Combined social feed (active 10d listings, tenant requirements, reels)
-- `POST /api/social/save` — Save/bookmark listing, property, or reel
-- `GET /api/social/saved` — Retrieve saved items
-- `POST /api/users/:id/follow` — Follow/unfollow profile
-- `GET /api/users/:username` — Instagram-style profile details
-
-### Properties & 10-Day Listings
-- `GET /api/properties` — Filter by area, type, budget, gender, zero brokerage
-- `GET /api/properties/:id` — Property profile with active rooms, reels & reviews
-- `POST /api/properties` — Create property
-- `GET /api/listings` — Active rental listings
-- `POST /api/listings` — Create room listing (sets 10-day expiration timer)
-- `POST /api/listings/:id/renew` — **Renew listing for 10 days**
-- `POST /api/listings/:id/mark-rented` — **Mark as rented (removes from feeds)**
-
-### Tenant Rental Requirements (Side 2)
-- `GET /api/requirements` — Search tenant requests by budget, occupation & area
-- `POST /api/requirements` — Post rental requirement
-- `GET /api/requirements/:id/matches` — Compute compatibility match score
-
-### Short-Form Reels
-- `GET /api/reels` — Fetch video reels
-- `POST /api/reels` — Upload new reel tour
-- `POST /api/reels/:id/like` — Like/unlike reel
-- `GET /api/reels/:id/comments` — Reel comments
-- `POST /api/reels/:id/comments` — Post comment
-
-### Real-time Messaging
-- `GET /api/conversations` — Direct message inbox
-- `POST /api/conversations` — Start or open conversation with attached property context
-- `GET /api/conversations/:id/messages` — Fetch thread messages
-- `POST /api/messages` — Send message with attached property inquiry card
-
-### Notifications & Search
-- `GET /api/notifications` — Retrieve alerts (expiring soon, new inquiry, matches)
-- `GET /api/search?q=query&tab=all` — Global search across properties, people, reels & requirements
-- `GET /api/admin/metrics` — Marketplace operational metrics
+- If the dev server crashes with `ENOENT`, make sure you are running the command inside the project folder.
+- If `DATABASE_URL` is missing, the app still starts in prototype mode, but Postgres-backed records will not persist.
+- If a Windows machine cannot run a script, use PowerShell and keep commands cross-platform.

@@ -64,10 +64,12 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 export const api = {
   // Auth
   getSessionUser: async () => {
+    const activeUserId = getApiClientUserId();
     const res = await fetch(`${BASE_URL}/auth/session`, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'x-user-id': activeUserId,
       },
     });
 
@@ -80,27 +82,6 @@ export const api = {
   },
   getCurrentUser: () => fetchJson<{ user: User }>('/auth/me'),
   getDemoUsers: () => fetchJson<{ users: User[]; currentUserId: string }>('/auth/demo-users'),
-  googleLogin: async (credential: string) => {
-    const res = await fetch(`${BASE_URL}/auth/google`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ credential }),
-    });
-
-    if (!res.ok) {
-      const errorBody = await res.json().catch(() => ({}));
-      throw new Error(errorBody.error || 'Google login failed');
-    }
-
-    const data = await res.json() as { success: boolean; user: User };
-    if (data?.user?.id) {
-      setApiClientUserId(data.user.id);
-    }
-    return data;
-  },
   logout: async () => {
     const res = await fetch(`${BASE_URL}/auth/logout`, {
       method: 'POST',
@@ -408,40 +389,6 @@ export const api = {
     fetchJson<{ success: boolean; user: User }>(`/admin/verify-user/${id}`, {
       method: 'POST',
       body: JSON.stringify({ isVerified }),
-    }),
-
-  // AI & Gemini Integrations
-  analyzeMatchWithAI: (propertyId: string, requirementId: string) =>
-    fetchJson<{
-      success: boolean;
-      analysis: {
-        aiScore: number;
-        summary: string;
-        pros: string[];
-        cons: string[];
-        negotiationTip: string;
-      };
-    }>('/ai/match-analysis', {
-      method: 'POST',
-      body: JSON.stringify({ propertyId, requirementId }),
-    }),
-  generateListingWithAI: (params: {
-    title: string;
-    area: string;
-    propertyType: string;
-    roomType: string;
-    rent: number;
-    notes?: string;
-  }) =>
-    fetchJson<{
-      success: boolean;
-      enhancedTitle: string;
-      description: string;
-      suggestedAmenities: string[];
-      instagramHashtags: string[];
-    }>('/ai/generate-listing', {
-      method: 'POST',
-      body: JSON.stringify(params),
     }),
 
   // Admin

@@ -32,8 +32,8 @@ export async function connectDatabase() {
   }
 }
 
-export async function ensureUserProfileFromClerk(input: {
-  clerkUserId: string;
+export async function ensureUserProfileForUser(input: {
+  userId: string;
   username: string;
   email: string;
   name: string;
@@ -55,12 +55,12 @@ export async function ensureUserProfileFromClerk(input: {
 
   const existingByEmail = await prisma.userProfile.findUnique({ where: { email: normalizeEmail } }).catch(() => null);
 
-  if (existingByEmail && existingByEmail.clerkUserId !== input.clerkUserId) {
+  if (existingByEmail && existingByEmail.clerkUserId !== input.userId) {
     return existingByEmail;
   }
 
   const profile = await prisma.userProfile.upsert({
-    where: { clerkUserId: input.clerkUserId },
+    where: { clerkUserId: input.userId },
     update: {
       username,
       email: normalizeEmail,
@@ -70,13 +70,13 @@ export async function ensureUserProfileFromClerk(input: {
       locationArea: input.locationArea || null,
       roles: input.roles || [],
       activeRole: input.activeRole || 'TENANT',
-      authProvider: input.authProvider || 'CLERK',
+      authProvider: input.authProvider || 'PROTOTYPE',
       providerSubject: input.providerSubject || null,
       isVerified: input.isVerified ?? false,
       updatedAt: new Date(),
     },
     create: {
-      clerkUserId: input.clerkUserId,
+      clerkUserId: input.userId,
       username,
       email: normalizeEmail,
       name: input.name,
@@ -85,7 +85,7 @@ export async function ensureUserProfileFromClerk(input: {
       locationArea: input.locationArea || null,
       roles: input.roles || [],
       activeRole: input.activeRole || 'TENANT',
-      authProvider: input.authProvider || 'CLERK',
+      authProvider: input.authProvider || 'PROTOTYPE',
       providerSubject: input.providerSubject || null,
       isVerified: input.isVerified ?? false,
     },
@@ -94,16 +94,16 @@ export async function ensureUserProfileFromClerk(input: {
   return profile;
 }
 
-export async function getUserProfileByClerkId(clerkUserId: string) {
+export async function getUserProfileByUserId(userId: string) {
   if (!prisma) {
     return null;
   }
 
-  return prisma.userProfile.findUnique({ where: { clerkUserId } });
+  return prisma.userProfile.findUnique({ where: { clerkUserId: userId } });
 }
 
 export async function createPropertyRecord(input: {
-  ownerClerkUserId: string;
+  ownerUserId: string;
   title: string;
   description?: string;
   propertyType: string;
@@ -128,7 +128,7 @@ export async function createPropertyRecord(input: {
     throw new Error('Database is not configured. Set DATABASE_URL to enable Prisma persistence.');
   }
 
-  const owner = await getUserProfileByClerkId(input.ownerClerkUserId);
+  const owner = await getUserProfileByUserId(input.ownerUserId);
   if (!owner) {
     throw new Error('User profile not found for database-backed property creation.');
   }
@@ -173,7 +173,7 @@ export async function listPublicProperties(params: {
   maxRent?: number | null;
   genderPreference?: string | null;
   noBrokerage?: boolean | null;
-  currentUserClerkId?: string | null;
+  currentUserId?: string | null;
 }) {
   if (!prisma) {
     return [];
@@ -211,15 +211,15 @@ export async function listPublicProperties(params: {
     ...property,
     owner: property.owner,
     isSaved: !!(
-      params.currentUserClerkId &&
-      property.savedBy.some((entry) => entry.user.clerkUserId === params.currentUserClerkId)
+      params.currentUserId &&
+      property.savedBy.some((entry) => entry.user.clerkUserId === params.currentUserId)
     ),
     savedBy: undefined,
   }));
 }
 
 export async function toggleSavedProperty(input: {
-  currentUserClerkId: string;
+  currentUserId: string;
   targetType: 'listing' | 'property' | 'reel' | 'post';
   targetId: string;
 }) {
@@ -227,7 +227,7 @@ export async function toggleSavedProperty(input: {
     return { isSaved: false, skipped: true };
   }
 
-  const currentUser = await getUserProfileByClerkId(input.currentUserClerkId);
+  const currentUser = await getUserProfileByUserId(input.currentUserId);
   if (!currentUser) {
     throw new Error('Authenticated user profile not found in database.');
   }
@@ -260,12 +260,12 @@ export async function toggleSavedProperty(input: {
   return { isSaved: true };
 }
 
-export async function getSavedPropertiesForUser(currentUserClerkId: string) {
+export async function getSavedPropertiesForUser(currentUserId: string) {
   if (!prisma) {
     return { listings: [], properties: [], reels: [] };
   }
 
-  const currentUser = await getUserProfileByClerkId(currentUserClerkId);
+  const currentUser = await getUserProfileByUserId(currentUserId);
   if (!currentUser) {
     return { listings: [], properties: [], reels: [] };
   }
@@ -286,7 +286,7 @@ export async function getSavedPropertiesForUser(currentUserClerkId: string) {
   };
 }
 
-export async function getPropertyById(propertyId: string, currentUserClerkId?: string | null) {
+export async function getPropertyById(propertyId: string, currentUserId?: string | null) {
   if (!prisma) {
     return null;
   }
@@ -315,8 +315,8 @@ export async function getPropertyById(propertyId: string, currentUserClerkId?: s
     listings: property.listings,
     reviews: property.reviews,
     isSaved: !!(
-      currentUserClerkId &&
-      property.savedBy.some((entry) => entry.user.clerkUserId === currentUserClerkId)
+      currentUserId &&
+      property.savedBy.some((entry) => entry.user.clerkUserId === currentUserId)
     ),
     isFollowing: false,
   };

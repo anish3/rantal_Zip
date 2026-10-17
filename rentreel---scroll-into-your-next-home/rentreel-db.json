@@ -525,7 +525,7 @@
         "Daily Cleaning"
       ],
       "genderPreference": "BOYS",
-      "status": "ACTIVE",
+      "status": "EXPIRED",
       "createdAt": "2026-10-06T06:05:13.207Z",
       "expiresAt": "2026-10-16T06:05:13.207Z",
       "viewsCount": 284,
@@ -559,7 +559,7 @@
         "Modular Kitchen"
       ],
       "genderPreference": "ANY",
-      "status": "ACTIVE",
+      "status": "EXPIRED",
       "createdAt": "2026-09-30T06:05:13.207Z",
       "expiresAt": "2026-10-10T00:05:13.207Z",
       "viewsCount": 512,
@@ -625,7 +625,7 @@
         "Modular Kitchen"
       ],
       "genderPreference": "ANY",
-      "status": "ACTIVE",
+      "status": "EXPIRED",
       "createdAt": "2026-10-05T06:05:13.207Z",
       "expiresAt": "2026-10-15T06:05:13.207Z",
       "viewsCount": 418,
@@ -1001,18 +1001,18 @@
         "user-tenant-aman",
         "user-owner-abc"
       ],
-      "lastMessage": "Awesome, will visit today around 5:30 PM!",
-      "lastMessageAt": "2026-10-09T04:05:13.207Z",
+      "lastMessage": "Hi! Yes, food menu is included in the plan and deposit is 1 month rent. Feel free to send a visit request!",
+      "lastMessageAt": "2026-10-17T14:21:23.479Z",
       "unreadCount": {
-        "user-owner-abc": 0,
+        "user-owner-abc": 2,
         "user-tenant-aman": 0
       },
       "activeContext": {
         "type": "PROPERTY",
-        "id": "prop-abc-vijaynagar",
-        "title": "ABC Premium Executive & Student PG",
-        "subtitle": "Vijay Nagar, Indore • ₹7,500 - ₹13,000/mo",
-        "price": 7500,
+        "id": "prop-1791526629791",
+        "title": "single room 1 bhk",
+        "subtitle": "Vijay Nagar, Indore • ₹9,500 - ₹12,000/mo",
+        "price": 9500,
         "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&auto=format&fit=crop&q=80",
         "location": "Vijay Nagar"
       }
@@ -1161,6 +1161,78 @@
       },
       "isRead": false,
       "createdAt": "2026-10-09T06:06:37.028Z"
+    },
+    {
+      "id": "msg-1792246229089-7sw3",
+      "conversationId": "conv-aman-abc",
+      "senderId": "user-tenant-aman",
+      "receiverId": "user-owner-abc",
+      "text": "f",
+      "context": {
+        "type": "PROPERTY",
+        "id": "prop-1791526629791",
+        "title": "single room 1 bhk",
+        "subtitle": "Vijay Nagar, Indore • ₹9,500 - ₹12,000/mo",
+        "price": 9500,
+        "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&auto=format&fit=crop&q=80",
+        "location": "Vijay Nagar"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:10:29.089Z"
+    },
+    {
+      "id": "msg-1792246230301-hyrg",
+      "conversationId": "conv-aman-abc",
+      "senderId": "user-owner-abc",
+      "receiverId": "user-tenant-aman",
+      "text": "Hello Aman Sharma! Thanks for reaching out. Yes, the room is available with WiFi and power backup. You can book a walkthrough anytime.",
+      "context": {
+        "type": "PROPERTY",
+        "id": "prop-1791526629791",
+        "title": "single room 1 bhk",
+        "subtitle": "Vijay Nagar, Indore • ₹9,500 - ₹12,000/mo",
+        "price": 9500,
+        "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&auto=format&fit=crop&q=80",
+        "location": "Vijay Nagar"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:10:30.301Z"
+    },
+    {
+      "id": "msg-1792246882267-ylx5",
+      "conversationId": "conv-aman-abc",
+      "senderId": "user-tenant-aman",
+      "receiverId": "user-owner-abc",
+      "text": "erg",
+      "context": {
+        "type": "PROPERTY",
+        "id": "prop-1791526629791",
+        "title": "single room 1 bhk",
+        "subtitle": "Vijay Nagar, Indore • ₹9,500 - ₹12,000/mo",
+        "price": 9500,
+        "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&auto=format&fit=crop&q=80",
+        "location": "Vijay Nagar"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:21:22.267Z"
+    },
+    {
+      "id": "msg-1792246883479-8ejn",
+      "conversationId": "conv-aman-abc",
+      "senderId": "user-owner-abc",
+      "receiverId": "user-tenant-aman",
+      "text": "Hi! Yes, food menu is included in the plan and deposit is 1 month rent. Feel free to send a visit request!",
+      "context": {
+        "type": "PROPERTY",
+        "id": "prop-1791526629791",
+        "title": "single room 1 bhk",
+        "subtitle": "Vijay Nagar, Indore • ₹9,500 - ₹12,000/mo",
+        "price": 9500,
+        "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&auto=format&fit=crop&q=80",
+        "location": "Vijay Nagar"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:21:23.479Z"
     }
   ],
   "notifications": [
@@ -1271,6 +1343,101 @@
       },
       "isRead": false,
       "createdAt": "2026-10-09T06:17:37.324Z"
+    },
+    {
+      "id": "notif-1792245961289-5j4u",
+      "userId": "user-owner-abc",
+      "type": "LISTING_EXPIRED",
+      "title": "Room Listing Expired ⚠️",
+      "message": "Your listing \"AC Single Room with Balcony & Food in Vijay Nagar\" expired after 10 days. Renew now to reactivate discovery.",
+      "linkUrl": "/listings/list-1",
+      "metadata": {
+        "listingId": "list-1"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:06:01.289Z"
+    },
+    {
+      "id": "notif-1792245961290-7gzc",
+      "userId": "user-broker-shivam",
+      "type": "LISTING_EXPIRED",
+      "title": "Room Listing Expired ⚠️",
+      "message": "Your listing \"Fully Furnished 1BHK Flat near C21 Mall Scheme 54\" expired after 10 days. Renew now to reactivate discovery.",
+      "linkUrl": "/listings/list-2",
+      "metadata": {
+        "listingId": "list-2"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:06:01.290Z"
+    },
+    {
+      "id": "notif-1792245961290-w1o1",
+      "userId": "user-owner-ananya",
+      "type": "LISTING_EXPIRED",
+      "title": "Room Listing Expired ⚠️",
+      "message": "Your listing \"Luxury Studio Apartment in Scheme 140 with Terrace\" expired after 10 days. Renew now to reactivate discovery.",
+      "linkUrl": "/listings/list-4",
+      "metadata": {
+        "listingId": "list-4"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:06:01.290Z"
+    },
+    {
+      "id": "notif-1792246229089-0ual",
+      "userId": "user-owner-abc",
+      "type": "NEW_MESSAGE",
+      "title": "Message from Aman Sharma 💬",
+      "message": "f",
+      "linkUrl": "/messages?conv=conv-aman-abc",
+      "metadata": {
+        "conversationId": "conv-aman-abc",
+        "senderId": "user-tenant-aman"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:10:29.089Z"
+    },
+    {
+      "id": "notif-1792246230301-s5wv",
+      "userId": "user-tenant-aman",
+      "type": "NEW_MESSAGE",
+      "title": "Message from ABC Premium PG & Hostels 💬",
+      "message": "Hello Aman Sharma! Thanks for reaching out. Yes, the room is available with WiFi",
+      "linkUrl": "/messages?conv=conv-aman-abc",
+      "metadata": {
+        "conversationId": "conv-aman-abc",
+        "senderId": "user-owner-abc"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:10:30.301Z"
+    },
+    {
+      "id": "notif-1792246882267-n4v5",
+      "userId": "user-owner-abc",
+      "type": "NEW_MESSAGE",
+      "title": "Message from Aman Sharma 💬",
+      "message": "erg",
+      "linkUrl": "/messages?conv=conv-aman-abc",
+      "metadata": {
+        "conversationId": "conv-aman-abc",
+        "senderId": "user-tenant-aman"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:21:22.267Z"
+    },
+    {
+      "id": "notif-1792246883479-6k9l",
+      "userId": "user-tenant-aman",
+      "type": "NEW_MESSAGE",
+      "title": "Message from ABC Premium PG & Hostels 💬",
+      "message": "Hi! Yes, food menu is included in the plan and deposit is 1 month rent. Feel fre",
+      "linkUrl": "/messages?conv=conv-aman-abc",
+      "metadata": {
+        "conversationId": "conv-aman-abc",
+        "senderId": "user-owner-abc"
+      },
+      "isRead": false,
+      "createdAt": "2026-10-17T14:21:23.479Z"
     }
   ],
   "visitRequests": [

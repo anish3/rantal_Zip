@@ -1,17 +1,14 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
-import session from 'express-session';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { apiRouter } from './src/server/routes.ts';
-import { connectDatabase } from './src/server/db.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  const databaseReady = await connectDatabase();
   const app = express();
   const basePort = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const candidatePorts = Array.from({ length: 10 }, (_, index) => basePort + index);
@@ -31,23 +28,6 @@ async function startServer() {
     next();
   });
 
-  // Session-backed auth for Google OIDC and server-side user identity
-  app.set('trust proxy', 1);
-  app.use(
-    session({
-      name: 'rentreel.sid',
-      secret: process.env.SESSION_SECRET || 'rentreel-dev-secret-change-me',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-      },
-    })
-  );
-
   // Body parsing with limits
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -61,8 +41,8 @@ async function startServer() {
       status: 'ok',
       product: 'RentReel',
       city: 'Indore',
-      database: databaseReady ? 'postgres' : 'json-fallback',
-      geminiConfigured: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY'),
+      authenticationDisabled: true,
+      databaseConfigured: Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0),
       timestamp: new Date().toISOString(),
     });
   });

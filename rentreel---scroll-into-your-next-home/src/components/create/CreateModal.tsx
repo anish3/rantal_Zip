@@ -87,28 +87,19 @@ export const CreateModal: React.FC = () => {
 
   if (!isCreateModalOpen) return null;
 
-  const handleAiEnhanceListing = async () => {
+  const handleAiEnhanceListing = () => {
     setIsAiGenerating(true);
-    try {
-      const res = await api.generateListingWithAI({
-        title: listingTitle || 'Room',
-        area: listingArea,
-        propertyType: listingPropType,
-        roomType: listingRoomType,
-        rent: Number(listingRent) || 9000,
-        notes: listingDescription,
-      });
-      if (res.enhancedTitle) setListingTitle(res.enhancedTitle);
-      if (res.description) setListingDescription(res.description);
-      if (res.suggestedAmenities?.length) {
-        setListingAmenities((prev) => Array.from(new Set([...prev, ...res.suggestedAmenities])));
-      }
-      showToast('AI enhanced your title, description and amenities!', 'success');
-    } catch (err: any) {
-      showToast('AI enhancement unavailable, keep your edits', 'info');
-    } finally {
-      setIsAiGenerating(false);
-    }
+
+    const generatedTitle = `${listingRoomType.toLowerCase()} ${listingPropType.toLowerCase()} in ${listingArea}`;
+    const generatedDescription = `Bright and well-kept ${listingRoomType.toLowerCase()} in ${listingArea}. Ideal for renters seeking a convenient location, modern essentials, and a comfortable move-in experience.`;
+    const suggestedAmenities = ['WiFi', 'Power Backup', 'Attached Bath', 'Food', 'AC'];
+
+    setListingTitle((prev) => prev || generatedTitle);
+    setListingDescription((prev) => prev || generatedDescription);
+    setListingAmenities((prev) => Array.from(new Set([...prev, ...suggestedAmenities])));
+
+    showToast('Listing details were refreshed locally for a stronger listing preview.', 'success');
+    setIsAiGenerating(false);
   };
 
   const handleCreateListing = async (e: React.FormEvent) => {

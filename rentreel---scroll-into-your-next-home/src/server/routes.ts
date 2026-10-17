@@ -1,11 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { OAuth2Client } from 'google-auth-library';
 import { store } from './store.ts';
 import { UserRole, PropertyType, RoomType, GenderPreference, Room } from './types.ts';
-import { analyzeMatchWithAI, generateListingWithAI } from './gemini.ts';
 import {
   db,
-  ensureUserProfileFromClerk,
+  ensureUserProfileForUser,
   createPropertyRecord,
   listPublicProperties,
   getPropertyById,
@@ -13,30 +11,40 @@ import {
   getSavedPropertiesForUser,
 } from './db.ts';
 
-declare module 'express-session' {
-  interface SessionData {
-    userId?: string;
-  }
-}
-
 export const apiRouter = Router();
 
 // Current simulated session user (default Aman Sharma, switchable anytime)
 let defaultUserId = 'user-tenant-aman';
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
-
 function getActingUserId(req: Request): string {
-  const sessionUserId = req.session?.userId as string | undefined;
-  if (sessionUserId && store.users.has(sessionUserId)) {
-    return sessionUserId;
-  }
-
-  const headerUserId = req.headers['x-user-id'] as string;
+  const headerUserId = req.headers['x-user-id'] as string | undefined;
   if (headerUserId && store.users.has(headerUserId)) {
     return headerUserId;
   }
+
+  if (headerUserId && !store.users.has(headerUserId)) {
+    const fallbackUser = {
+      id: headerUserId,
+      username: `prototype_${headerUserId.slice(-8)}`,
+      name: 'Prototype User',
+      email: `${headerUserId}@prototype.local`,
+      avatar: `https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80`,
+      bio: 'Prototype mode user',
+      roles: ['TENANT'],
+      activeRole: 'TENANT',
+      isVerified: false,
+      city: 'Indore',
+      locationArea: 'Vijay Nagar',
+      authProvider: 'PROTOTYPE',
+      providerSubject: headerUserId,
+      followersCount: 0,
+      followingCount: 0,
+      createdAt: new Date().toISOString(),
+    } as any;
+    store.users.set(fallbackUser.id, fallbackUser);
+    return fallbackUser.id;
+  }
+
   return defaultUserId;
 }
 
@@ -73,138 +81,37 @@ apiRouter.use((req, res, next) => {
 // ==========================================
 
 apiRouter.get('/auth/session', (req: Request, res: Response) => {
-  const sessionUserId = req.session?.userId as string | undefined;
-  if (!sessionUserId || !store.users.has(sessionUserId)) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  const actingUserId = getActingUserId(req);
+  const user = store.users.get(actingUserId) || {
+    id: actingUserId,
+    username: `prototype_${actingUserId.slice(-8)}`,
+    name: 'Prototype User',
+    email: `${actingUserId}@prototype.local`,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    bio: 'Prototype mode user',
+    roles: ['TENANT'],
+    activeRole: 'TENANT',
+    isVerified: false,
+    city: 'Indore',
+    locationArea: 'Vijay Nagar',
+    authProvider: 'PROTOTYPE',
+    providerSubject: actingUserId,
+    followersCount: 0,
+    followingCount: 0,
+    createdAt: new Date().toISOString(),
+  } as any;
 
-  return res.json({ user: store.users.get(sessionUserId) });
+  store.users.set(actingUserId, user);
+  return res.json({ user });
 });
 
 apiRouter.get('/auth/me', (req: Request, res: Response) => {
-  const sessionUserId = req.session?.userId as string | undefined;
-  if (sessionUserId && store.users.has(sessionUserId)) {
-    return res.json({ user: store.users.get(sessionUserId) });
-  }
-
   const currentUserId = getActingUserId(req);
   const user = store.users.get(currentUserId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
   return res.json({ user });
-});
-
-apiRouter.post('/auth/google', async (req: Request, res: Response) => {
-  const { credential } = req.body as { credential?: string };
-
-  if (!credential || typeof credential !== 'string') {
-    return res.status(400).json({ error: 'Google credential is required' });
-  }
-
-  if (!googleClient) {
-    return res.status(503).json({
-      error: 'Google OAuth is not configured. Set GOOGLE_CLIENT_ID and VITE_GOOGLE_CLIENT_ID in your environment.',
-    });
-  }
-
-  try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email || !payload.email_verified) {
-      return res.status(401).json({ error: 'Google account email is not verified.' });
-    }
-
-    const email = payload.email.toLowerCase().trim();
-    const baseUsername = (payload.given_name || payload.name || 'rentreel')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '') || 'rentreel_user';
-
-    let existingUser = Array.from(store.users.values()).find(
-      (u) => u.email.toLowerCase() === email || (u.authProvider === 'GOOGLE' && u.providerSubject === payload.sub)
-    );
-
-    if (!existingUser) {
-      const username = (() => {
-        let candidate = baseUsername;
-        let index = 1;
-        while (Array.from(store.users.values()).some((u) => u.username.toLowerCase() === candidate)) {
-          candidate = `${baseUsername}_${index}`;
-          index += 1;
-        }
-        return candidate;
-      })();
-
-      const createdUser: any = {
-        id: `user-google-${Date.now()}`,
-        username,
-        name: payload.name || payload.given_name || 'Google User',
-        email,
-        avatar: payload.picture || `https://images.unsplash.com/photo-${1535713875000 + Math.floor(Math.random() * 1000)}?w=300&auto=format&fit=crop&q=80`,
-        bio: 'Verified user from Google sign-in.',
-        roles: ['TENANT'],
-        activeRole: 'TENANT',
-        isVerified: true,
-        city: 'Indore',
-        locationArea: 'Vijay Nagar',
-        authProvider: 'GOOGLE',
-        providerSubject: payload.sub,
-        followersCount: 0,
-        followingCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-
-      store.users.set(createdUser.id, createdUser);
-      defaultUserId = createdUser.id;
-      existingUser = createdUser;
-      store.scheduleDiskSave();
-    } else {
-      existingUser.name = payload.name || existingUser.name;
-      existingUser.email = email;
-      existingUser.avatar = payload.picture || existingUser.avatar;
-      existingUser.isVerified = true;
-      existingUser.authProvider = 'GOOGLE';
-      existingUser.providerSubject = payload.sub;
-      existingUser.city = existingUser.city || 'Indore';
-      existingUser.locationArea = existingUser.locationArea || 'Vijay Nagar';
-      defaultUserId = existingUser.id;
-      store.scheduleDiskSave();
-    }
-
-    if (!existingUser) {
-      return res.status(500).json({ error: 'Failed to create or load the authenticated user.' });
-    }
-
-    if (db.isEnabled()) {
-      await ensureUserProfileFromClerk({
-        clerkUserId: existingUser.id,
-        username: existingUser.username,
-        email: existingUser.email,
-        name: existingUser.name,
-        avatar: existingUser.avatar,
-        city: existingUser.city,
-        locationArea: existingUser.locationArea,
-        roles: existingUser.roles,
-        activeRole: existingUser.activeRole,
-        authProvider: existingUser.authProvider || 'GOOGLE',
-        providerSubject: payload.sub,
-        isVerified: true,
-      });
-    }
-
-    req.session.userId = existingUser.id;
-    return res.json({ success: true, user: existingUser });
-  } catch (error: any) {
-    console.error('[Google OAuth] Verification failed:', error);
-    return res.status(401).json({
-      error: error?.message || 'Google authentication failed. Please try again.',
-    });
-  }
 });
 
 apiRouter.get('/auth/demo-users', (req: Request, res: Response) => {
@@ -284,8 +191,8 @@ apiRouter.post('/auth/register', rateLimit(10, 60000), async (req: Request, res:
   store.scheduleDiskSave();
 
   if (db.isEnabled()) {
-    await ensureUserProfileFromClerk({
-      clerkUserId: newUser.id,
+    await ensureUserProfileForUser({
+      userId: newUser.id,
       username: newUser.username,
       email: newUser.email,
       name: newUser.name,
@@ -294,7 +201,7 @@ apiRouter.post('/auth/register', rateLimit(10, 60000), async (req: Request, res:
       locationArea: newUser.locationArea,
       roles: newUser.roles,
       activeRole: newUser.activeRole,
-      authProvider: 'LOCAL',
+      authProvider: 'PROTOTYPE',
       isVerified: newUser.isVerified,
     });
   }
@@ -322,16 +229,6 @@ apiRouter.post('/auth/login', rateLimit(15, 60000), (req: Request, res: Response
 });
 
 apiRouter.post('/auth/logout', (req: Request, res: Response) => {
-  if (req.session) {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to logout' });
-      }
-      return res.json({ success: true, message: 'Logged out successfully' });
-    });
-    return;
-  }
-
   return res.json({ success: true, message: 'Logged out successfully' });
 });
 
@@ -419,7 +316,7 @@ apiRouter.get('/properties', async (req: Request, res: Response) => {
       maxRent: maxRent ? Number(maxRent) : null,
       genderPreference: typeof genderPreference === 'string' ? genderPreference : null,
       noBrokerage: noBrokerage === 'true' ? true : noBrokerage === 'false' ? false : null,
-      currentUserClerkId: currentUserId,
+      currentUserId,
     });
     return res.json({ properties });
   }
@@ -515,7 +412,7 @@ apiRouter.post('/properties', async (req: Request, res: Response) => {
 
   if (db.isEnabled()) {
     const createdProperty = await createPropertyRecord({
-      ownerClerkUserId: currentUserId,
+      ownerUserId: currentUserId,
       title,
       description,
       propertyType,
@@ -1333,7 +1230,7 @@ apiRouter.post('/social/save', async (req: Request, res: Response) => {
 
   if (db.isEnabled()) {
     if (targetType === 'property') {
-      const result = await toggleSavedProperty({ currentUserClerkId: currentUserId, targetType, targetId });
+      const result = await toggleSavedProperty({ currentUserId, targetType, targetId });
       return res.json({ success: true, isSaved: result.isSaved });
     }
     return res.json({ success: true, isSaved: false });
@@ -1628,54 +1525,6 @@ apiRouter.get('/search', (req: Request, res: Response) => {
     reels: matchedReels,
     requirements: matchedRequirements,
   });
-});
-
-// ==========================================
-// AI & GEMINI POWERED ENDPOINTS
-// ==========================================
-
-apiRouter.post('/ai/match-analysis', async (req: Request, res: Response) => {
-  const { propertyId, requirementId } = req.body;
-  if (!propertyId || !requirementId) {
-    return res.status(400).json({ error: 'propertyId and requirementId are required' });
-  }
-
-  const property = store.properties.get(propertyId);
-  const requirement = store.requirements.get(requirementId);
-
-  if (!property || !requirement) {
-    return res.status(404).json({ error: 'Property or requirement not found' });
-  }
-
-  try {
-    const analysis = await analyzeMatchWithAI(property, requirement);
-    return res.json({ success: true, analysis });
-  } catch (err: any) {
-    console.error('AI match analysis error:', err);
-    return res.status(500).json({ error: 'AI match analysis failed' });
-  }
-});
-
-apiRouter.post('/ai/generate-listing', async (req: Request, res: Response) => {
-  const { title, area, propertyType, roomType, rent, notes } = req.body;
-  if (!area || !rent) {
-    return res.status(400).json({ error: 'area and rent are required' });
-  }
-
-  try {
-    const result = await generateListingWithAI({
-      title: title || 'Room',
-      area,
-      propertyType: propertyType || 'PG',
-      roomType: roomType || 'SINGLE',
-      rent: Number(rent),
-      notes,
-    });
-    return res.json({ success: true, ...result });
-  } catch (err: any) {
-    console.error('AI listing generation error:', err);
-    return res.status(500).json({ error: 'AI listing generation failed' });
-  }
 });
 
 // ==========================================
